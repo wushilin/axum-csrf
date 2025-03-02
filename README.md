@@ -12,6 +12,12 @@ The rejection body will tell the reason.
 
 No need to do any other change
 
+# HTTP Form post hidden field of csrf_token?
+The code does not inspect POST param for CSRF retrieval. This is generally very expensive and less convenient. If you need to use post
+you can append form action with query string like `?csrf_token=xxxx` to submit. 
+
+If both `x-csrf-token` header and `?csrf_token=xxxx` query string are specified, the `x-csrf-token` will be used.
+
 # Key feature
 1. Fully automated. PUT, DELETE, POST, PATCH requests always has CSRF protection.
 2. Resilient. Requests that does not have CSRF cookie will get a new token automatically
