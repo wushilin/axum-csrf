@@ -1,6 +1,6 @@
 [package]
 name = "axum-csrf-simple"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "Apache-2.0"
 description = "Simple CSRF protection for axum apps"
@@ -8,6 +8,7 @@ repository = "https://github.com/wushilin/axum-csrf.git"
 
 [dependencies]
 axum = "0.8.1"
+axum-server = "0.7.1"
 cookie = "0.18.1"
 hex = "0.4.3"
 hmac = "0.12.1"
@@ -17,5 +18,5 @@ serde = {version="1", features=["derive"]}
 serde_urlencoded = "0.7.1"
 sha2 = "0.10.8"
 short-uuid = "0.2.0"
-tokio = "1.43.0"
+tokio = {version="1.43.0", features=["full"]}
 tower-cookies = "0.11.0"

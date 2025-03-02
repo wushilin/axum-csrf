@@ -15,8 +15,8 @@ use rand::distr::Alphanumeric;
 type HmacSha256 = Hmac<Sha256>;
 
 lazy_static! {
-    pub static ref KEY:Arc<RwLock<String>> = Arc::new(RwLock::new(generate_random_string(32)));
-    pub static ref SECURE_COOKIE: Arc<RwLock<bool>> = Arc::new(RwLock::new(false));
+    static ref KEY:Arc<RwLock<String>> = Arc::new(RwLock::new(generate_random_string(32)));
+    static ref SECURE_COOKIE: Arc<RwLock<bool>> = Arc::new(RwLock::new(false));
 }
 
 /// Generate a random string of size
@@ -156,6 +156,32 @@ fn get_csrf_token_from_query(request:&Request) -> Option<String> {
 }
 
 /// Middleware to protect CSRF
+/// ```rust,no_run
+/// use axum_csrf_simple as csrf;
+/// use axum::middleware;
+/// use axum::routing::get;
+/// use axum::Router;
+/// use std::net::SocketAddr;
+/// 
+/// #[tokio::main]
+/// async fn main() {
+///   csrf::set_csrf_token_sign_key("key").await;
+///   csrf::set_csrf_secure_cookie_enable(false).await;
+///   let app1 = Router::new()
+///      .route("/admin/endpoint1", get(handle1).post(handle1).put(handle1))
+///      .route("/api/csrf", get(csrf::get_csrf_token))
+///      .route_layer(middleware::from_fn(csrf::csrf_protect));
+///   let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+///   axum_server::bind(addr)
+///     .serve(app1.into_make_service())
+///     .await
+///     .unwrap();
+/// }
+/// 
+/// async fn handle1() -> &'static str{
+///     "HELLO"
+/// }
+/// ```
 pub async fn csrf_protect(mut request: Request, next: Next) -> Result<Response, StatusCode> {
     let csrf_token_from_cookie = request.headers().get(http::header::COOKIE)
         .map(|x| x.to_str().ok()).flatten()
