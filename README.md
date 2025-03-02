@@ -43,7 +43,18 @@ let app = Router::new()
 ## client side
 Client has to submit request with `x-csrf-token` header value to be able to submit successfully.
 
-### Retrieving CSRF token:
+### Retrieving CSRF token
+Example using plain javascript. 
+
+It is pretty easy to write for react, angular, nodejs.
+
+The payload of the `/api/csrf` is like
+
+```json
+{"token":"xzP14JrA9qHFaLwKHpFYYj-a209dda82c379b55542b4ed2f977e5464be79b8b7f2009ecb08d36b92599b13f","is_new":false}
+```
+The token can't be used across servers with different signature key.
+
 ```html
 <script>
         var CSRF_TOKEN = "";
@@ -57,8 +68,7 @@ Client has to submit request with `x-csrf-token` header value to be able to subm
                 })
                 .then(data => {
                     console.log("CSRF Token:", data.token);
-                    CSRF_TOKEN = data.token;
-                    document.getElementById("tokenDisplay").innerText = CSRF_TOKEN;
+                    CSRF_TOKEN = data.token; /// now we can reuse the token
                 })
                 .catch(error => console.error("Error fetching CSRF token:", error));
         })();
@@ -89,6 +99,18 @@ Client has to submit request with `x-csrf-token` header value to be able to subm
                 console.error("Error:", error);
             }
         }
+```
+
+Note that this is very suitable for AJAX based submission. For normal submission, you will need to append a query string `csrf_token=xxx` to the POST URL.
+
+This is not preferred, but you can use if you have no choice.
+
+```html
+<script>
+async function submitMyForm(event) {
+            event.target.action = event.target.action + "?csrf_token=" + CSRF_TOKEN + "&other=aaa"; /// Append the CSRF token
+            return;
+</script>
 ```
 
 # Your code to verify CSRF code?
