@@ -29,19 +29,26 @@ $ cargo add axum-csrf-simple
 /// import as alias (optional)
 use axum_csrf_simple as csrf;
 
-/// Set your preferred token signing key. All token is <uuid>-<hmac_signature> format. Invalid tokens won't be trusted.
-csrf::set_csrf_token_sign_key("my-signing-key").await; // if not set, the default signing key is 32 char auto generated signed key
-csrf::set_csrf_secure_cookie_enable(true); // set to true to only transfer cookie over https (for dev, set to false - which is the default)
+/// Set your preferred token signing key.
+/// All token is <uuid>-<hmac_signature> format. Invalid tokens won't be trusted.
+// if not set, the default signing key is 32 char auto generated signed key
+// note token signed by different sign key will be invalid.
+// if you did not specify the signing key, it could be an issue if you have multiple instance of apps
+// as the token won't be compatible with other server's token
+csrf::set_csrf_token_sign_key("my-signing-key").await;
+
+// set to true to only transfer CSRF cookie over https (for dev, set to false or it won't work - false is the default)
+csrf::set_csrf_secure_cookie_enable(true); 
 
 let app = Router::new()
-        .route("/admin/endpoint1", get(handle1).post(handle1).put(handle1))
+        .route("/admin/endpoint1", get(handle1).post(handle1).put(handle1)) // this url, when POST/PUT, is CSRF protected
         .route("/api/get_csrf_token", get(csrf::get_csrf_token)) // expose the API for your client to retrieve CSRF token. One time only, and it can be cached.
         .route_layer(middleware::from_fn(csrf::csrf_protect));
 
 /// Test accessing /admin/endpoint1 with post, it will require CSRF validation.
 ```
 
-Note the exposing of `/api/get_csrf_token` API uri can be customized based on your need.
+Note the `/api/get_csrf_token` API uri can be customized based on your need.
 
 ## client side
 Client has to submit request with `x-csrf-token` header value to be able to submit successfully.
@@ -54,11 +61,14 @@ It is pretty easy to write for react, angular, nodejs.
 The result payload of the `/api/get_csrf_token` is like
 
 ```json
-{"token":"xzP14JrA9qHFaLwKHpFYYj-a209dda82c379b55542b4ed2f977e5464be79b8b7f2009ecb08d36b92599b13f","is_new":false}
+{
+  "token":"xzP14JrA9qHFaLwKHpFYYj-a209dda82c379b55542b4ed2f977e5464be79b8b7f2009ecb08d36b92599b13f",
+  "is_new":false
+}
 ```
 
-token: The token
-is_new: Tells if the server did create a new token for client
+*token*: The token
+*is_new*: Tells if the server did create a new token for client
 
 The token can't be used across servers with different signature key.
 
@@ -123,7 +133,8 @@ async function submitMyForm(event) {
 </script>
 ```
 
-# Your code to verify CSRF code?
-Not required. All requests that reaches your code is CSRF validated.
+# How can your code verify CSRF code?
+Not required. All requests that reaches your code is CSRF validated and can be assumed to be safe.
+
 
 
