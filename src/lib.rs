@@ -200,7 +200,6 @@ pub async fn csrf_protect(mut request: Request, next: Next) -> Result<Response, 
             let is_valid = validate_csrf_token(&token).await;
             if !is_valid {
                 need_new_token = true;
-                println!("Found invalid token {}", token);
                 CSRFToken{ token: generate_csrf_token().await, is_new: true}
             } else {
                 need_new_token = false;
