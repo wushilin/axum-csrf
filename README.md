@@ -4,9 +4,11 @@ Simple, automatic CSRF handling for Axum
 # Concept
 All requests that has no CSRF cookie will get set-cookie header automatically.
 
-All state changing requests (PUT,DELETE,POST,PATCH) will request `x-csrf-header` with a valid header.
+All state changing requests (PUT,DELETE,POST,PATCH) will request `x-csrf-token` with a valid header.
 
-The `x-csrf-header` is compared with the request cookie of CSRF header. If not matched, request will be rejected with `401`.
+The `x-csrf-token` is compared with the request cookie `csrf_token`. If not matched, request will be rejected with `401`.
+
+The rejection body will tell the reason.
 
 No need to do any other change
 
