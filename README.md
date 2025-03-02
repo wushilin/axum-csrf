@@ -41,23 +41,13 @@ let app = Router::new()
 ```
 
 ## client side
-Client has to submit request with `x-csrf-token` value to be able to submit successfully.
+Client has to submit request with `x-csrf-token` header value to be able to submit successfully.
 
+### Retrieving CSRF token:
 ```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetch CSRF Token</title>
-</head>
-<body>
-
-    <button onclick="fetchCsrfToken()">Get CSRF Token</button>
-    <p id="tokenDisplay">Token will appear here</p>
-
-    <script>
-        function fetchCsrfToken() {
+<script>
+        var CSRF_TOKEN = "";
+        (function() {
             fetch("/api/csrf")
                 .then(response => {
                     if (!response.ok) {
@@ -67,18 +57,38 @@ Client has to submit request with `x-csrf-token` value to be able to submit succ
                 })
                 .then(data => {
                     console.log("CSRF Token:", data.token);
-                    document.getElementById("tokenDisplay").innerText = `Token: ${data.token}`;
+                    CSRF_TOKEN = data.token;
+                    document.getElementById("tokenDisplay").innerText = CSRF_TOKEN;
                 })
                 .catch(error => console.error("Error fetching CSRF token:", error));
-        }
-    </script>
-    <form action="/admin/endpoint1" method="post">
-      <input name="test1"/>
-      <button name="submit" value="submit"/>
-    </form>
-</body>
-</html>
+        })();
+        /// CSRF_TOKEN can be used
+</script>
+```
 
+### Submitting the form
+```html
+        async function submitMyForm(event) {
+            event.preventDefault();
+            console.log("Submit called");
+
+            const form = event.target;
+            const formData = new FormData(form); // Collect form data
+
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    headers: {
+                        "x-csrf-token": CSRF_TOKEN
+                    },
+                    body: formData // Send form data
+                });
+
+                const result = await response.json(); // Assuming server returns JSON
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
 ```
 
 # Your code to verify CSRF code?
