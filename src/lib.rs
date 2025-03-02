@@ -1,10 +1,10 @@
-use axum::{body::Body, extract::{OptionalFromRequestParts, Request}, http::{self, request::Parts, HeaderValue, Method, StatusCode}, middleware::Next, response::{IntoResponse, Response}, Json};
+use axum::{body::Body, extract::{OptionalFromRequestParts, Request}, http::{self, request::Parts, HeaderValue, Method, StatusCode, Uri}, middleware::Next, response::{IntoResponse, Response}, Json};
 use hex::encode;
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use short_uuid::short;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
 use tower_cookies::Cookie;
 use std::convert::Infallible;
@@ -141,6 +141,20 @@ pub async fn get_csrf_token(request:Request) -> Result<Json<CSRFToken>, impl Int
         }
     }
 }
+
+fn get_csrf_token_from_query(request:&Request) -> Option<String> {
+    let uri: &Uri = request.uri();
+
+    if let Some(query) = uri.query() {
+        let params: HashMap<String, String> = serde_urlencoded::from_str(query).unwrap_or_default();
+        
+        if let Some(value) = params.get("csrf_token") {
+            return Some(value.clone())
+        }
+    }
+    None
+}
+
 /// Middleware to protect CSRF
 pub async fn csrf_protect(mut request: Request, next: Next) -> Result<Response, StatusCode> {
     let csrf_token_from_cookie = request.headers().get(http::header::COOKIE)
@@ -175,16 +189,17 @@ pub async fn csrf_protect(mut request: Request, next: Next) -> Result<Response, 
     request.extensions_mut().insert(actual_token.clone());
     let actual_token_str = actual_token.clone();
     let csrf_token_from_cookie_str = actual_token.token;
-    let csrf_token_from_header = request.headers()
+    let csrf_token_from_header_or_query = request.headers()
         .get("x-csrf-token")
         .map(|x| x.to_str()
             .ok()
             .map(|x| x.to_string())
-        ).flatten();
+        ).flatten().or(get_csrf_token_from_query(&request));
+    //let csrf_token_from_query_string = request
     let method = request.method();
     let mut response = match method {
         &Method::POST | &Method::PUT | &Method::DELETE | &Method::PATCH => {
-            let valid_csrf = match csrf_token_from_header {
+            let valid_csrf = match csrf_token_from_header_or_query {
                 Some(val) =>  {
                     if val == csrf_token_from_cookie_str {
                         true

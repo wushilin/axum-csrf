@@ -1,6 +1,6 @@
 [package]
 name = "axum-csrf-simple"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "Apache-2.0"
 description = "Simple CSRF protection for axum apps"
@@ -14,6 +14,7 @@ hmac = "0.12.1"
 lazy_static = "1.5.0"
 rand = "0.9.0"
 serde = {version="1", features=["derive"]}
+serde_urlencoded = "0.7.1"
 sha2 = "0.10.8"
 short-uuid = "0.2.0"
 tokio = "1.43.0"
