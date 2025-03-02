@@ -31,6 +31,7 @@ use axum_csrf_simple as csrf;
 
 /// Set your preferred token signing key. All token is <uuid>-<hmac_signature> format. Invalid tokens won't be trusted.
 csrf::set_csrf_token_sign_key("my-signing-key").await; // if not set, the default signing key is 32 char auto generated signed key
+csrf::set_csrf_secure_cookie_enable(true); // set to true to only transfer cookie over https (for dev, set to false - which is the default)
 
 let app = Router::new()
         .route("/admin/endpoint1", get(handle1).post(handle1).put(handle1))
@@ -40,6 +41,8 @@ let app = Router::new()
 /// Test accessing /admin/endpoint1 with post, it will require CSRF validation.
 ```
 
+Note the exposing of `/api/get_csrf_token` API uri can be customized based on your need.
+
 ## client side
 Client has to submit request with `x-csrf-token` header value to be able to submit successfully.
 
@@ -48,18 +51,24 @@ Example using plain javascript.
 
 It is pretty easy to write for react, angular, nodejs.
 
-The payload of the `/api/csrf` is like
+The result payload of the `/api/get_csrf_token` is like
 
 ```json
 {"token":"xzP14JrA9qHFaLwKHpFYYj-a209dda82c379b55542b4ed2f977e5464be79b8b7f2009ecb08d36b92599b13f","is_new":false}
 ```
+
+token: The token
+is_new: Tells if the server did create a new token for client
+
 The token can't be used across servers with different signature key.
+
+When requesting the token, server automatically set a cookie csrf_token.
 
 ```html
 <script>
         var CSRF_TOKEN = "";
         (function() {
-            fetch("/api/csrf")
+            fetch("/api/get_csrf_token")
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -76,7 +85,7 @@ The token can't be used across servers with different signature key.
 </script>
 ```
 
-### Submitting the form
+### Submitting the form using fetch or other AJAX library
 ```html
         async function submitMyForm(event) {
             event.preventDefault();
@@ -89,7 +98,7 @@ The token can't be used across servers with different signature key.
                 const response = await fetch(form.action, {
                     method: "POST",
                     headers: {
-                        "x-csrf-token": CSRF_TOKEN
+                        "x-csrf-token": CSRF_TOKEN // set the token
                     },
                     body: formData // Send form data
                 });
@@ -103,7 +112,8 @@ The token can't be used across servers with different signature key.
 
 Note that this is very suitable for AJAX based submission. For normal submission, you will need to append a query string `csrf_token=xxx` to the POST URL.
 
-This is not preferred, but you can use if you have no choice.
+### Normal submit via query string
+This is not preferred as it is less secure in general, but you can use if you have no choice.
 
 ```html
 <script>
