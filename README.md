@@ -76,6 +76,7 @@ The result payload of the `/api/get_csrf_token` is like
 ```
 
 *token*: The token
+
 *is_new*: Tells if the server did create a new token for client
 
 The token can't be used across servers with different signature key.
