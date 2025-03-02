@@ -21,7 +21,7 @@ If both `x-csrf-token` header and `?csrf_token=xxxx` query string are specified,
 # Key feature
 1. Fully automated. PUT, DELETE, POST, PATCH requests always has CSRF protection.
 2. Resilient. Requests that does not have CSRF cookie will get a new token automatically
-3. Easy to use. No need to touch your html. You can use `GET /api/get_csrf_token` to retrieve the token programmatically, and use it forever. It won't change
+3. Easy to use. Simply `GET /api/get_csrf_token` to retrieve the token programmatically, and use it in header or query_string when submitting.
 
 # How to use
 
